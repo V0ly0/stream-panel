@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Stream Panel</title>
+<link id="fav" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%238b93a7'/%3E%3C/svg%3E">
+<style nonce="__NONCE__">
+:root{--bg:#0b0b0c;--side:#101011;--card:#151516;--card2:#1b1b1d;--line:#262628;--line2:#313134;--txt:#f0f0f2;--mut:#8c8c93;--acc:#f0f0f2;--accfg:#111;--ok:#34d399;--warn:#f5b942;--err:#f0616d;--info:#8fa4ff;--inp:#101011;--hatch:rgba(255,255,255,.035);--bar1:#3a3a3d;--bar2:#1f1f21;--barh1:#f4f4f5;--barh2:#6e6e73;--shadow:0 10px 30px #0008}
+@media(prefers-color-scheme:light){:root{--bg:#f2f2f4;--side:#fff;--card:#fff;--card2:#f5f5f7;--line:#e4e4e8;--line2:#d2d2d8;--txt:#18181b;--mut:#6b6b74;--acc:#18181b;--accfg:#fff;--ok:#0f9f6e;--warn:#b7791f;--err:#d1343f;--info:#4a5bd8;--inp:#fff;--hatch:rgba(0,0,0,.035);--bar1:#c9c9d0;--bar2:#e6e6ea;--barh1:#18181b;--barh2:#6b6b74;--shadow:0 10px 30px #0002}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--txt);font:14px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.hide{display:none!important}
+.sr{position:absolute;left:-9999px}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button,input,select{font:inherit}
+button{cursor:pointer;border:0;border-radius:10px;padding:9px 14px;font-weight:600;background:var(--acc);color:var(--accfg);display:inline-flex;align-items:center;gap:7px}
+button.sec{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+button.sec:hover:not(:disabled){border-color:var(--line2)}
+button.danger{background:var(--err);color:#fff}
+button.sm{padding:6px 10px;font-size:12.5px;border-radius:8px}
+button:disabled{opacity:.4;cursor:default}
+:focus-visible{outline:2px solid var(--info);outline-offset:2px}
+a{color:var(--info)}
+label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px}
+label.chk{display:flex;gap:8px;align-items:center;color:var(--txt);margin:9px 0;font-size:13.5px}
+input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
+input[type=text],input[type=password],input[type=number],input[type=search],input[type=time],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--inp);color:var(--txt)}
+.hint{font-size:12px;color:var(--mut);margin-top:6px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.between{justify-content:space-between}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ---------- shell ---------- */
+.shell{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+aside{background:var(--side);border-right:1px solid var(--line);padding:16px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;padding:2px 6px 14px;border-bottom:1px dashed var(--line);margin-bottom:10px}
+.logo{width:28px;height:28px;border-radius:8px;background:var(--acc);color:var(--accfg);display:grid;place-items:center}
+.brand small{font-weight:500;color:var(--mut);font-size:11px;margin-left:auto}
+.sect{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);padding:14px 8px 6px}
+nav{display:flex;flex-direction:column;gap:2px}
+nav button{background:none;color:var(--mut);justify-content:flex-start;padding:9px 10px;border-radius:9px;font-weight:550;width:100%}
+nav button:hover{color:var(--txt);background:var(--card2)}
+nav button[aria-selected=true]{background:var(--card2);color:var(--txt);box-shadow:inset 0 0 0 1px var(--line)}
+.sidefoot{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding-top:12px;border-top:1px dashed var(--line)}
+main{padding:0 26px 48px;min-width:0}
+.topbar{display:flex;align-items:center;gap:10px;height:56px;border-bottom:1px dashed var(--line);color:var(--mut);margin:0 -26px 22px;padding:0 26px;position:sticky;top:0;background:var(--bg);z-index:5}
+.topbar b{color:var(--txt);font-weight:600}
+.topbar .sp{margin-left:auto}
+h1{font-size:24px;margin:0 0 4px;font-weight:600;letter-spacing:-.01em}
+.sub{color:var(--mut);margin:0}
+h2{font-size:13px;margin:0;font-weight:600;display:flex;gap:9px;align-items:center}
+h2 .i{color:var(--mut)}
+
+/* hatched card frame, like the reference */
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px;background-image:repeating-linear-gradient(135deg,transparent 0 7px,var(--hatch) 7px 8px)}
+.card>.in{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card>.hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px 11px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+.cards3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.cards2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+
+/* stat cards */
+.stat .big{font-size:30px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat .meta{font-size:12px;color:var(--mut);margin-top:8px}
+.stat .meta b{font-weight:600}
+.up{color:var(--ok)}.down{color:var(--err)}
+.stat .in{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;min-height:106px;position:relative;overflow:hidden}
+.stat svg.spark{width:48%;height:54px;flex:none}
+.big .u{font-size:14px;color:var(--mut);font-weight:500;margin-left:4px}
+
+/* status pill */
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;font-weight:600;font-size:13px;background:var(--card2);border:1px solid var(--line)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mut)}
+.pill.live{color:var(--ok)}.pill.live .dot{background:var(--ok);box-shadow:0 0 0 4px #34d39930;animation:pulse 2s infinite}
+.pill.waiting,.pill.starting,.pill.connecting,.pill.retrying,.pill.stopping{color:var(--warn)}
+.pill.waiting .dot,.pill.starting .dot,.pill.connecting .dot,.pill.retrying .dot,.pill.stopping .dot{background:var(--warn)}
+.pill.error{color:var(--err)}.pill.error .dot{background:var(--err)}
+.pill.scheduled{color:var(--info)}.pill.scheduled .dot{background:var(--info)}
+.pill.done{color:var(--ok)}.pill.done .dot{background:var(--ok)}
+@keyframes pulse{50%{box-shadow:0 0 0 7px #34d39900}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* alerts */
+.alert{border-radius:10px;padding:10px 12px;font-size:13px;border:1px solid;display:flex;gap:8px;align-items:flex-start}
+.alert.w{background:#f5b94212;border-color:#f5b94255;color:var(--warn)}
+.alert.e{background:#f0616d12;border-color:#f0616d55;color:var(--err)}
+.alert.i{background:#8fa4ff12;border-color:#8fa4ff55;color:var(--info)}
+#alerts{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+#alerts:empty{display:none}
+
+/* progress */
+.bar{height:8px;background:var(--card2);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--barh2),var(--barh1));width:0;transition:width .6s;border-radius:99px}
+.tiers{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tier{font-size:11.5px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mut)}
+.tier.done{color:var(--ok);border-color:#34d39955;background:#34d39912}
+.tier.next{color:var(--txt);border-color:var(--line2)}
+
+/* chart */
+.chartwrap{position:relative;height:290px;margin-top:6px;padding-right:44px}
+.grid{position:absolute;left:0;right:44px;top:0;bottom:26px;pointer-events:none}
+.grid i{position:absolute;left:0;right:0;border-top:1px solid var(--line);opacity:.7}
+.grid span{position:absolute;right:-44px;transform:translateY(-50%);color:var(--mut);font-size:12px;width:38px;text-align:right}
+.bars{position:absolute;left:0;right:44px;top:0;bottom:26px;display:flex;align-items:flex-end;gap:calc(var(--gap,8px))}
+.col{flex:1;height:100%;display:flex;align-items:flex-end;position:relative;min-width:0}
+.col b{display:block;width:100%;border-radius:8px 8px 4px 4px;background:linear-gradient(var(--bar1),var(--bar2));border:1px solid var(--line);min-height:3px;transition:background .15s}
+.col.on b{background:linear-gradient(var(--barh1),var(--barh2));border-color:transparent}
+.xl{position:absolute;left:0;right:44px;bottom:0;height:20px;display:flex;gap:calc(var(--gap,8px))}
+.xl span{flex:1;text-align:center;color:var(--mut);font-size:12px;white-space:nowrap;overflow:visible;min-width:0}
+.tip{position:absolute;left:0;height:0;border-top:1.5px dashed var(--mut);pointer-events:none;display:none;right:44px}
+.tip em{position:absolute;left:0;top:-14px;transform:translateX(-4px);background:#1d2433;color:#e8ecf5;font-style:normal;font-size:12px;padding:3px 9px;border-radius:6px;border:1px solid #33405c;white-space:nowrap}
+.tip:after{content:"";position:absolute;left:var(--bx,50%);top:-3px;width:6px;height:6px;border-radius:50%;background:var(--txt)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--card2)}
+.seg button{border-radius:0;background:none;color:var(--mut);padding:5px 11px;font-size:12px;font-weight:600}
+.seg button[aria-pressed=true]{background:var(--acc);color:var(--accfg)}
+
+/* feed */
+.feed{display:flex;flex-direction:column;position:relative;max-height:520px;overflow:auto;padding:2px 2px 2px 0}
+.ev{display:flex;gap:12px;padding:9px 0;position:relative}
+.ev:not(:last-child):after{content:"";position:absolute;left:17px;top:46px;bottom:-6px;border-left:1px dashed var(--line2)}
+.ev .ico{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--card2);display:grid;place-items:center;flex:none;color:var(--mut)}
+.ev.err .ico{color:var(--err)}.ev.warn .ico{color:var(--warn)}.ev.ok .ico,.ev.live .ico{color:var(--ok)}
+.ev .t{font-weight:600;font-size:13px;overflow-wrap:anywhere}.ev .s{color:var(--mut);font-size:12px}
+.mini{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.mini div{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+.mini b{display:block;font-size:17px;font-variant-numeric:tabular-nums}.mini span{color:var(--mut);font-size:11.5px}
+
+/* table */
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+thead th{color:var(--mut);font-weight:550;font-size:12px;background:var(--card2)}
+thead th:first-child{border-radius:10px 0 0 10px}thead th:last-child{border-radius:0 10px 10px 0}
+.tag{display:inline-flex;align-items:center;gap:6px}
+.tag.err{color:var(--err)}.tag.warn{color:var(--warn)}.tag.ok{color:var(--ok)}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.days{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px}.days label{margin:0;display:flex;gap:5px;align-items:center;color:var(--txt)}
+.ok-badge{color:var(--ok);font-size:12px;font-weight:600;margin-left:6px}
+.checks{list-style:none;padding:0;margin:12px 0 0}
+.checks li{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap}
+.checks li:last-child{border:0}.checks b{min-width:170px}.checks .d{color:var(--mut)}
+details summary{cursor:pointer;color:var(--info);font-size:13px;margin-top:12px}
+pre{margin:0;background:var(--inp);border:1px solid var(--line);border-radius:10px;padding:12px;height:520px;overflow:auto;font:12px/1.6 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+pre .err{color:var(--err)}pre .warn{color:var(--warn)}pre .ok{color:var(--ok)}pre .live{color:var(--info)}pre .t{color:var(--mut)}
+.login{max-width:380px;margin:14vh auto;padding:0 16px}
+#toasts{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px;z-index:20;max-width:min(380px,calc(100vw - 28px))}
+.toast{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:10px;padding:10px 14px;font-size:13px;box-shadow:var(--shadow)}
+.toast.e{border-left-color:var(--err)}
+#offline{position:sticky;top:0;z-index:30;text-align:center;padding:6px;font-size:13px;background:var(--err);color:#fff}
+
+@media(max-width:1180px){.cols{grid-template-columns:minmax(0,1fr)}.cards2{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  aside{position:static;height:auto;flex-direction:row;align-items:center;overflow-x:auto;padding:10px 12px;border-right:0;border-bottom:1px solid var(--line)}
+  .brand{border:0;padding:0 8px 0 0;margin:0}.brand small,.sect,.sidefoot{display:none}
+  nav{flex-direction:row}nav button{width:auto;white-space:nowrap}
+  main{padding:0 14px 40px}.topbar{margin:0 -14px 18px;padding:0 14px}
+  .cards3{grid-template-columns:minmax(0,1fr)}.brand{white-space:nowrap}.stack,.card{min-width:0}
+}
+</style>
+</head>
+<body>
+<div id="offline" class="hide" role="alert">Connection to the panel lost — retrying…</div>
+
+<!-- LOGIN -->
+<div id="login" class="login hide">
+  <div class="card"><div class="in">
+    <div class="brand" style="border:0;padding-left:0"><span class="logo" id="logo1"></span>Stream Panel</div>
+    <div class="hint" style="margin-top:0">Enter the panel password.</div>
+    <label for="pw" class="sr">Password</label>
+    <input id="pw" type="password" placeholder="Password" autocomplete="current-password" style="margin-top:12px">
+    <div id="loginerr" class="alert e hide" role="alert" style="margin-top:10px"></div>
+    <div class="row" style="margin-top:12px"><button id="loginbtn" style="width:100%;justify-content:center">Sign in</button></div>
+  </div></div>
+</div>
+
+<!-- APP -->
+<div id="app" class="shell hide">
+<aside>
+  <div class="brand"><span class="logo" id="logo2"></span>Stream Panel<small id="ver"></small></div>
+  <div class="sect">Main navigation</div>
+  <nav role="tablist" aria-label="Sections">
+    <button role="tab" data-tab="dash" aria-selected="true"><svg class="i"><use href="#i-grid"/></svg>Overview</button>
+    <button role="tab" data-tab="hist" aria-selected="false"><svg class="i"><use href="#i-chart"/></svg>History</button>
+    <button role="tab" data-tab="cfg" aria-selected="false"><svg class="i"><use href="#i-gear"/></svg>Settings</button>
+    <button role="tab" data-tab="logs" aria-selected="false"><svg class="i"><use href="#i-term"/></svg>Logs</button>
+  </nav>
+  <div class="sidefoot">
+    <span id="pill" class="pill"><i class="dot"></i><span id="pilltxt" aria-live="polite">…</span></span>
+    <button class="sec sm" id="logout"><svg class="i"><use href="#i-out"/></svg>Sign out</button>
+  </div>
+</aside>
+
+<main>
+<div class="topbar"><svg class="i"><use href="#i-grid"/></svg><span>Overview</span><span>/</span><b id="crumb">Dashboard</b>
+  <span class="sp"></span><span id="chan" class="hint" style="margin:0"></span></div>
+
+<!-- ============ OVERVIEW ============ -->
+<section id="tab-dash">
+  <div class="row between" style="margin-bottom:18px">
+    <div><h1>Hello 👋</h1><p class="sub">Here are the latest insights from your stream.</p></div>
+    <div class="row">
+      <button id="startbtn"><svg class="i"><use href="#i-play"/></svg>Start</button>
+      <button id="stopbtn" class="sec"><svg class="i"><use href="#i-stop"/></svg>Stop</button>
+      <button id="restartbtn" class="sec"><svg class="i"><use href="#i-refresh"/></svg>Restart</button>
+    </div>
+  </div>
+  <div id="alerts" aria-live="polite"></div>
+
+  <div class="cols">
+    <div class="stack">
+      <div class="cards3">
+        <div class="card stat"><div class="hd"><h2>Live viewers</h2><svg class="i"><use href="#i-eye"/></svg></div>
+          <div class="in"><div><div class="big" id="t_viewers">0</div><div class="meta">peak <b id="t_peak">0</b> this session</div></div></div></div>
+        <div class="card stat"><div class="hd"><h2>Counted today</h2><svg class="i"><use href="#i-clock"/></svg></div>
+          <div class="in"><div><div class="big" id="t_today">0<span class="u">h</span></div><div class="meta"><span id="t_tz">UTC</span> · session <b id="t_sess">00h 00m</b></div></div><svg class="spark" id="sp1" viewBox="0 0 100 40" preserveAspectRatio="none"></svg></div></div>
+        <div class="card stat"><div class="hd"><h2>7-day rate</h2><svg class="i"><use href="#i-bolt"/></svg></div>
+          <div class="in"><div><div class="big" id="t_rate">—</div><div class="meta">coverage <b id="t_cov">—</b></div></div><svg class="spark" id="sp2" viewBox="0 0 100 40" preserveAspectRatio="none"></svg></div></div>
+      </div>
+
+      <div class="cards2">
+        <div class="card"><div class="hd"><h2><svg class="i"><use href="#i-badge"/></svg>Badge progress</h2><span class="hint" style="margin:0" id="tier_next"></span></div>
+          <div class="in">
+            <div class="big" style="font-size:20px;font-weight:600" id="tier_now">—</div>
+            <div class="bar" style="margin-top:12px" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="tier_pb"><i id="tier_bar"></i></div>
+            <div class="hint" id="tier_eta"></div>
+            <div class="tiers" id="tiers"></div>
+          </div></div>
+        <div class="card"><div class="hd"><h2><svg class="i"><use href="#i-target"/></svg>Goal</h2></div>
+          <div class="in">
+            <div class="big" style="font-size:20px;font-weight:600" id="goal_big">No goal set</div>
+            <div class="bar" style="margin-top:12px"><i id="goal_bar"></i></div>
+            <div class="hint" id="goal_line"></div>
+            <div class="hint">Set a goal and a schedule in Settings.</div>
+          </div></div>
+      </div>
+
+      <div class="card"><div class="hd"><h2><svg class="i"><use href="#i-chart"/></svg>Hours counted per day</h2>
+          <div class="seg" id="range" role="group" aria-label="Period"><button data-d="7" aria-pressed="false">7 d</button><button data-d="14" aria-pressed="true">14 d</button><button data-d="30" aria-pressed="false">30 d</button><button data-d="90" aria-pressed="false">90 d</button></div></div>
+        <div class="in">
+          <div class="row" style="align-items:baseline;gap:10px"><span class="big" style="font-size:30px;font-weight:600" id="c_total">0 h</span><span id="c_delta" class="hint" style="margin:0"></span></div>
+          <div class="chartwrap" id="chartwrap"><div class="grid" id="cgrid"></div><div class="bars" id="cbars"></div><div class="tip" id="ctip"><em id="ctipt"></em></div><div class="xl" id="cx"></div></div>
+          <div class="hint">Local estimate by the panel (days follow the configured timezone). Discord updates the badge within 24–48 h.</div>
+        </div></div>
+
+      <div class="card"><div class="hd"><h2><svg class="i"><use href="#i-list"/></svg>Recent sessions</h2><button class="sec sm" id="seeall">View all</button></div>
+        <div class="in tablewrap"><table><thead><tr><th>Started</th><th>Duration</th><th>Counted</th><th>Peak</th><th>Mode</th><th>Ended</th></tr></thead><tbody id="recentrows"></tbody></table>
+        <div class="hint" id="recentempty">No sessions recorded yet.</div></div></div>
+    </div>
+
+    <div class="stack">
+      <div class="card"><div class="hd"><h2><svg class="i"><use href="#i-bell"/></svg>Latest updates</h2><span class="hint" style="margin:0" id="evcount"></span></div>
+        <div class="in"><div class="feed" id="feed"></div>
+          <div class="mini">
+            <div><b id="t_total">0 h</b><span>counted (total)</span></div>
+            <div><b id="t_up">0m</b><span>panel uptime · <i id="t_rst">0</i> restarts</span></div>
+            <div><b id="t_mem">—</b><span>memory</span></div>
+            <div><b id="t_load">—</b><span>load average</span></div>
+          </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HISTORY ============ -->
+<section id="tab-hist" class="hide">
+  <h1>History</h1><p class="sub" style="margin-bottom:18px">Every session with its duration, counted time, peak viewers and why it ended.</p>
+  <div class="card"><div class="hd"><h2><svg class="i"><use href="#i-list"/></svg>Sessions</h2><a href="/api/export.csv" download class="sm">Export days (CSV)</a></div>
+    <div class="in tablewrap"><table>
+      <thead><tr><th>Started</th><th>Duration</th><th>Counted</th><th>Peak</th><th>Mode</th><th>Ended</th></tr></thead>
+      <tbody id="sessrows"></tbody>
+    </table>
+    <div class="hint" id="sessempty">No sessions recorded yet.</div></div></div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section id="tab-cfg" class="hide">
+  <h1>Settings</h1><p class="sub" style="margin-bottom:18px">Connection, goal, schedule, notifications and data.</p>
+  <div class="cards2">
+  <div class="stack">
+    <div class="card"><div class="hd"><h2><svg class="i"><use href="#i-plug"/></svg>Connection</h2></div><div class="in">
+      <div id="setupnote" class="alert i hide">Step 1: paste your token and the voice channel ID, then save. Step 2: click Start.</div>
+      <label for="f_token">Token of the streaming account <span id="tok_ok" class="ok-badge hide">✓ saved</span></label>
+      <input id="f_token" type="password" placeholder="Leave empty to keep the current one" autocomplete="off">
+      <label for="f_chan">Voice channel (ID or link) <span id="chan_ok" class="ok-badge hide">✓</span></label>
+      <input id="f_chan" type="text" placeholder="e.g. 123456789012345678 or channel link" autocomplete="off">
+      <label for="f_alt">Viewer account token (alt) <span id="alt_ok" class="ok-badge hide">✓ saved</span></label>
+      <input id="f_alt" type="password" placeholder="Without a viewer, time does not count" autocomplete="off">
+      <div class="hint">The alt account must be able to join the same channel. <a href="#" id="clearalt">Remove alt</a></div>
+      <label for="f_mode">Streaming mode</label>
+      <select id="f_mode"><option value="afk">AFK — silent audio, ~0% CPU</option><option value="video">Video — assets/video.mp4 via ffmpeg (high CPU)</option></select>
+      <label class="chk"><input id="f_auto" type="checkbox"> Restart automatically with the server</label>
+      <div class="row" style="margin-top:6px"><button id="savebtn">Save</button><button id="checkbtn" class="sec">Check configuration</button><span id="savemsg" class="hint"></span></div>
+      <ul id="checks" class="checks" aria-live="polite"></ul>
+      <details><summary>Where do I find these?</summary>
+        <div class="hint">Channel ID: Discord → Settings → Advanced → Developer Mode, then right-click the voice channel → “Copy Channel ID”. The account needs the View, Connect and Video permissions. Required setting: Privacy → “Use data to customize my Discord experience” enabled.</div>
+      </details>
+    </div></div>
+
+    <div class="card"><div class="hd"><h2><svg class="i"><use href="#i-target"/></svg>Goal &amp; schedule</h2></div><div class="in">
+      <label for="f_target" style="margin-top:0">Hour goal (0 = none; the stream stops once reached)</label>
+      <input id="f_target" type="number" min="0" step="1" style="max-width:160px">
+      <div class="chips" id="targetchips" aria-label="Shortcuts: tiers"></div>
+      <label class="chk" style="margin-top:18px"><input id="f_sched" type="checkbox"> Limit the stream to a time window</label>
+      <div class="two">
+        <div><label for="f_from">From</label><input id="f_from" type="time" value="08:00"></div>
+        <div><label for="f_to">To</label><input id="f_to" type="time" value="23:00"></div>
+      </div>
+      <div class="days" id="days" role="group" aria-label="Active days"></div>
+      <label for="f_tz">Timezone</label>
+      <div class="row"><input id="f_tz" type="text" placeholder="Europe/Paris" autocomplete="off" style="flex:1;min-width:160px"><button class="sec sm" id="tzbtn" type="button">Use my browser's</button></div>
+      <div class="hint" id="schedstate"></div>
+      <div class="row" style="margin-top:12px"><button id="schedbtn">Save</button></div>
+    </div></div>
+  </div>
+
+  <div class="stack">
+    <div class="card"><div class="hd"><h2><svg class="i"><use href="#i-bell"/></svg>Notifications</h2></div><div class="in">
+      <label for="f_hook" style="margin-top:0">Webhook (Discord, ntfy, Slack-compatible…) <span id="hook_ok" class="ok-badge hide">✓ set</span></label>
+      <input id="f_hook" type="password" placeholder="https://discord.com/api/webhooks/… (empty = unchanged)" autocomplete="off">
+      <div class="hint">The URL is secret and never shown again. <a href="#" id="clearhook">Remove</a></div>
+      <label class="chk"><input type="checkbox" data-n="fatal"> Stopped because of a configuration error</label>
+      <label class="chk"><input type="checkbox" data-n="restarts"> Repeated restarts (3, 10, 30)</label>
+      <label class="chk"><input type="checkbox" data-n="stalled"> Stream stuck or without viewers for a long time</label>
+      <label class="chk"><input type="checkbox" data-n="tier"> New tier reached</label>
+      <label class="chk"><input type="checkbox" data-n="goal"> Hour goal reached</label>
+      <label class="chk"><input type="checkbox" data-n="started"> Stream started / resumed</label>
+      <div class="row"><button id="hookbtn" class="sec">Save and send a test</button></div>
+    </div></div>
+
+    <div class="card"><div class="hd"><h2><svg class="i"><use href="#i-lock"/></svg>Security</h2></div><div class="in">
+      <label for="pw_old" style="margin-top:0">Current password</label>
+      <input id="pw_old" type="password" autocomplete="current-password">
+      <label for="pw_new">New password (8 characters min.)</label>
+      <input id="pw_new" type="password" autocomplete="new-password">
+      <div class="row" style="margin-top:12px"><button id="pwbtn" class="sec">Change</button><button id="logoutall" class="sec">Sign out other devices</button></div>
+      <div class="hint" id="pwenv"></div>
+    </div></div>
+
+    <div class="card"><div class="hd"><h2><svg class="i"><use href="#i-db"/></svg>Statistics</h2></div><div class="in">
+      <label for="f_base" style="margin-top:0">Hours already accumulated before using the panel</label>
+      <div class="row"><input id="f_base" type="number" min="0" step="0.5" style="max-width:140px"><button id="basebtn" class="sec">Apply</button></div>
+      <div class="hint">Only positions the progress bar; it changes nothing on Discord's side.</div>
+      <div class="row" style="margin-top:14px">
+        <a href="/api/stats/export" download>Export (JSON)</a>
+        <button id="importbtn" class="sec sm" type="button">Import…</button>
+        <input id="importfile" type="file" accept="application/json,.json" class="hide">
+        <button id="resetbtn" class="danger sm">Reset</button>
+      </div>
+      <div class="hint">Import replaces the current statistics (the export of the old “discord-stream-host” is accepted). Export before a redeploy if the host's disk is temporary.</div>
+    </div></div>
+
+    <div class="card"><div class="hd"><h2><svg class="i"><use href="#i-user"/></svg>My Discord profile</h2></div><div class="in">
+      <div class="row"><button class="sec" id="profbtn">Check my badges</button></div>
+      <div id="prof" class="hint"></div>
+    </div></div>
+  </div>
+  </div>
+</section>
+
+<!-- ============ LOGS ============ -->
+<section id="tab-logs" class="hide">
+  <h1>Logs</h1><p class="sub" style="margin-bottom:18px">Live technical log. Tokens are masked.</p>
+  <div class="card"><div class="in">
+    <div class="row between" style="margin-bottom:10px">
+      <div class="row">
+        <select id="lvl" aria-label="Level" style="width:auto"><option value="all">All</option><option value="warn">Warnings + errors</option><option value="err">Errors</option></select>
+        <input id="q" type="search" placeholder="Filter…" aria-label="Filter the log" style="width:200px">
+      </div>
+      <div class="row"><label class="chk" style="margin:0"><input type="checkbox" id="autoscroll" checked> auto-scroll</label><a href="/api/logs/download" download>Download</a></div>
+    </div>
+    <pre id="logs" tabindex="0" aria-label="Log"></pre>
+  </div></div>
+</section>
+</main>
+</div>
+<div id="toasts" aria-live="polite"></div>
+
+<!-- icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-logo" viewBox="0 0 24 24"><path d="M5 5l9 7-9 7z M15 5h4v14h-4z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+<symbol id="i-term" viewBox="0 0 24 24"><path d="M4 6l6 6-6 6M12 19h8"/></symbol>
+<symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></symbol>
+<symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M3 21v-5h5"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
+<symbol id="i-badge" viewBox="0 0 24 24"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.3 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></symbol>
+<symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></symbol>
+<symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 10v5M12 18h.01"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14A8 8 0 0 1 10 4a8 8 0 1 0 10 10z"/></symbol>
+</svg>
+
+<script nonce="__NONCE__">
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ic=(n,cls)=>`<svg class="i ${cls||''}"><use href="#i-${n}"/></svg>`;
+document.querySelectorAll('#logo1,#logo2').forEach(e=>e.innerHTML=ic('logo'));
+class AuthErr extends Error{}
+const api=async(path,body)=>{
+  const opt=body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'panel'},body:JSON.stringify(body)};
+  const r=await fetch(path,opt);let j={};try{j=await r.json()}catch(e){}
+  if(r.status===401&&path!=='/api/login'){showLogin();throw new AuthErr('session expired')}
+  if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j;
+};
+function toast(msg,err){const d=document.createElement('div');d.className='toast'+(err?' e':'');d.textContent=msg;$('toasts').appendChild(d);setTimeout(()=>d.remove(),err?6000:3000)}
+const pad=n=>String(n).padStart(2,'0');
+const fmtH=s=>{s=Math.max(0,Math.floor(s));return pad(Math.floor(s/3600))+'h '+pad(Math.floor(s%3600/60))+'m'};
+const fmtUp=s=>{const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return d?d+'d '+h+'h':h?h+'h '+m+'m':m+'m'};
+const fmtDate=t=>new Date(t*1000).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+const fmtEta=s=>{if(s==null)return null;const d=s/86400;return d<1?'less than a day':d<2?'≈ 1 day':'≈ '+Math.round(d)+' days'};
+const PHASES={scheduled:'Scheduled — outside window',done:'Goal reached',live:'Live',waiting:'Live · 0 viewers',starting:'Starting stream…',connecting:'Connecting…',retrying:'Retrying…',stopping:'Stopping…',stopped:'Stopped',error:'Error'};
+const FAV={scheduled:'%238fa4ff',done:'%2334d399',live:'%2334d399',waiting:'%23f5b942',starting:'%23f5b942',connecting:'%23f5b942',retrying:'%23f5b942',stopping:'%23f5b942',error:'%23f0616d',stopped:'%238b93a7'};
+let timers=[],lastSeq=0,formFilled=false,logEntries=[],range=14,histData=null,fails=0,status=null;
+
+/* ---------- navigation ---------- */
+const CRUMB={dash:'Dashboard',hist:'History',cfg:'Settings',logs:'Logs'};
+function selectTab(t){
+  if(!CRUMB[t])t='dash';
+  document.querySelectorAll('nav [data-tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  Object.keys(CRUMB).forEach(x=>$('tab-'+x).classList.toggle('hide',x!==t));
+  $('crumb').textContent=CRUMB[t];
+  if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);
+  if(t==='hist'||t==='dash')loadHistory();
+  if(t==='logs')scrollLogs(true);
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('nav [data-tab]').forEach(b=>b.onclick=()=>selectTab(b.dataset.tab));
+$('seeall').onclick=()=>selectTab('hist');
+
+/* ---------- sign in ---------- */
+function stopTimers(){timers.forEach(clearInterval);timers=[]}
+function showLogin(){stopTimers();$('app').classList.add('hide');$('login').classList.remove('hide');$('pw').focus()}
+function showApp(){
+  $('login').classList.add('hide');$('app').classList.remove('hide');selectTab(location.hash.slice(1));
+  refresh();pollLogs();loadHistory();stopTimers();
+  timers=[setInterval(()=>{if(!document.hidden)refresh()},3000),setInterval(()=>{if(!document.hidden)pollLogs()},2500),setInterval(()=>{if(!document.hidden)loadHistory()},60000)];
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('app').classList.contains('hide')){refresh();pollLogs()}});
+async function init(){const s=await fetch('/api/session').then(r=>r.json());$('ver').textContent='v'+(s.version||'');s.authed?showApp():showLogin()}
+$('loginbtn').onclick=async()=>{try{await api('/api/login',{password:$('pw').value});$('pw').value='';$('loginerr').classList.add('hide');formFilled=false;showApp()}catch(e){$('loginerr').textContent=e.message;$('loginerr').classList.remove('hide')}};
+$('pw').onkeydown=e=>{if(e.key==='Enter')$('loginbtn').click()};
+$('logout').onclick=async()=>{try{await api('/api/logout',{})}catch(e){}formFilled=false;showLogin()};
+
+/* ---------- sparkline ---------- */
+function spark(el,vals){
+  const n=vals.length,max=Math.max(0.0001,...vals);
+  if(n<2){el.innerHTML='';return}
+  const pts=vals.map((v,i)=>[i*100/(n-1),36-(v/max)*32]);
+  const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const id='g'+el.id;
+  el.innerHTML=`<defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--ok)" stop-opacity=".35"/><stop offset="1" stop-color="var(--ok)" stop-opacity="0"/></linearGradient></defs><path d="${line} L100 40 L0 40Z" fill="url(#${id})"/><path d="${line}" fill="none" stroke="var(--ok)" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`;
+}
+
+/* ---------- status ---------- */
+const alertBox=(cls,ico,txt)=>`<div class="alert ${cls}">${ic(ico)}<span>${esc(txt)}</span></div>`;
+async function refresh(){
+  let s;try{s=await api('/api/status');fails=0;$('offline').classList.add('hide')}catch(e){if(!(e instanceof AuthErr)&&++fails>=2)$('offline').classList.remove('hide');return}
+  status=s;
+  const p=$('pill');p.className='pill '+s.phase;$('pilltxt').textContent=PHASES[s.phase]||s.phase;
+  document.title=(s.phase==='live'?'● '+s.viewers+' 👁 · ':s.phase==='error'?'⛔ ':'')+'Stream Panel';
+  $('fav').href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='"+(FAV[s.phase]||FAV.stopped)+"'/%3E%3C/svg%3E";
+  $('ver').textContent='v'+s.version;
+  $('t_viewers').textContent=s.viewers;$('t_peak').textContent=s.peak;$('t_sess').textContent=fmtH(s.session_counted);
+  $('t_tz').textContent=s.tz;$('t_today').innerHTML=s.today_hours.toFixed(1)+'<span class="u">h</span>';
+  $('t_total').textContent=s.lifetime_hours.toFixed(1)+' h';
+  $('t_rate').innerHTML=s.rate_per_day>0?s.rate_per_day.toFixed(1)+'<span class="u">h/day</span>':'—';
+  $('t_cov').textContent=s.rate_per_day>0?s.coverage.toFixed(0)+' %':'—';
+  $('t_mem').textContent=s.rss_mb?Math.round(s.rss_mb)+' MB':'—';$('t_load').textContent=s.load==null?'—':s.load;
+  $('t_up').textContent=fmtUp(s.panel_uptime);$('t_rst').textContent=s.restarts;
+  $('chan').textContent=s.channel_name?('Channel: #'+s.channel_name):'';
+  const on=['live','waiting','starting','connecting','retrying'].includes(s.phase),busy=on||s.phase==='stopping',sched=s.phase==='scheduled';
+  $('startbtn').disabled=busy||sched;$('stopbtn').disabled=!(on||sched);$('restartbtn').disabled=!on;
+  let a='';
+  if(s.error)a+=alertBox('e','alert','⛔ '+s.error);
+  if(s.phase==='waiting')a+=alertBox('w','alert','No viewer in the channel: the counter is paused. Check that the alt account is configured and connected.');
+  if(on&&!s.alt_enabled)a+=alertBox('w','alert','No alt account configured: without a viewer, hours do not count.');
+  if(sched)a+=alertBox('i','info','The stream is planned but outside its time window ('+s.schedule.start+'–'+s.schedule.end+', '+s.tz+' time): it will start by itself when the window opens. “Stop” cancels.');
+  if(s.phase==='done')a+=alertBox('i','target','Goal of '+s.target_hours+' h reached: the stream is stopped. Raise the goal (Settings) to continue.');
+  if(s.config_pending)a+=alertBox('i','info','The configuration changed: click “Restart” to apply it.');
+  if(!on&&s.ready_error)a+=alertBox('i','info','To complete: '+s.ready_error+' (Settings tab).');
+  if(s.config.mode==='video'&&!s.config.ffmpeg)a+=alertBox('w','alert','Video mode selected but ffmpeg was not found: the engine will fall back to silent mode.');
+  $('alerts').innerHTML=a;
+  // progress
+  const cur=s.tier_current,nx=s.tier_next;
+  $('tier_now').textContent=cur?`Tier ${cur.tier} · ${cur.name}`:'No tier yet';
+  $('tier_next').textContent=nx?`next: ${nx.name} (${nx.hours} h)`:'max tier reached 🎉';
+  $('tier_bar').style.width=s.tier_pct+'%';$('tier_pb').setAttribute('aria-valuenow',Math.round(s.tier_pct));
+  let eta='';
+  if(nx){const rem=nx.hours-s.lifetime_hours;eta=`${rem.toFixed(1)} h left`;
+    const e=fmtEta(s.eta_seconds);eta+=e?` · ${e} at the current pace (${s.rate_per_day.toFixed(1)} h/day), around ${s.eta_date}`:' · pace too low to estimate a date';
+    if(s.baseline_hours>0)eta+=` · incl. ${s.baseline_hours} h entered manually`}
+  $('tier_eta').textContent=eta;
+  // goal
+  if(s.target_hours>0){
+    const pct=Math.min(100,s.lifetime_hours/s.target_hours*100),rem=s.target_hours-s.lifetime_hours;
+    $('goal_big').textContent=`${s.lifetime_hours.toFixed(1)} / ${s.target_hours} h`;$('goal_bar').style.width=pct+'%';
+    $('goal_line').textContent=s.goal_reached?'Goal reached':`${rem.toFixed(1)} h left`+(s.target_eta_seconds?` · ${fmtEta(s.target_eta_seconds)}, around ${s.target_eta_date}`:'');
+  }else{$('goal_big').textContent='No goal set';$('goal_bar').style.width='0';$('goal_line').textContent=''}
+  const nxt=nx&&nx.tier;
+  $('tiers').innerHTML=s.tiers.map(t=>`<span class="tier ${t.done?'done':t.tier===nxt?'next':''}">${t.tier} · ${esc(t.name)} · ${t.hours}h</span>`).join('');
+  if(!$('targetchips').childElementCount)$('targetchips').innerHTML=s.tiers.map(t=>`<button class="sec sm" type="button" data-h="${t.hours}" title="${esc(t.name)}">${t.hours} h</button>`).join('');
+  $('schedstate').textContent=`It is ${s.local_time} (${s.tz}). `+(s.schedule.enabled?(s.in_window?'Window open: the stream may run.':'Outside the window: the stream is paused.'):'Schedule disabled: the stream runs continuously.')+(s.keepalive?' · Keep-alive active.':'');
+  // settings
+  const c=s.config;
+  $('tok_ok').classList.toggle('hide',!c.has_token);$('alt_ok').classList.toggle('hide',!c.has_alt);
+  $('chan_ok').classList.toggle('hide',!c.channel_id);$('hook_ok').classList.toggle('hide',!c.webhook_set);
+  $('setupnote').classList.toggle('hide',c.has_token&&!!c.channel_id);
+  $('pwenv').textContent=c.password_from_env?'The password is set by the PANEL_PASSWORD variable (cannot be changed here).':'';
+  $('pwbtn').disabled=c.password_from_env;
+  if(!formFilled){$('f_target').value=s.target_hours||0;$('f_sched').checked=s.schedule.enabled;$('f_from').value=s.schedule.start;$('f_to').value=s.schedule.end;$('f_tz').value=s.tz;
+    document.querySelectorAll('#days input').forEach(i=>i.checked=s.schedule.days.includes(+i.value));
+    $('f_chan').value=c.channel_id;$('f_mode').value=c.mode;$('f_auto').checked=c.autostart;$('f_base').value=s.baseline_hours;
+    document.querySelectorAll('[data-n]').forEach(i=>i.checked=!!c.notify[i.dataset.n]);formFilled=true}
+}
+
+/* ---------- chart + history ---------- */
+async function loadHistory(){try{histData=await api('/api/history');drawChart();drawSessions();drawSparks()}catch(e){}}
+function drawSparks(){
+  if(!histData)return;const d=histData.daily.slice(-14).map(x=>x.hours);
+  spark($('sp1'),d);spark($('sp2'),d.slice(-7));
+}
+const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function drawChart(){
+  if(!histData)return;
+  const all=histData.daily,d=all.slice(-range),n=d.length;
+  const max=Math.max(1,...d.map(x=>x.hours)),top=Math.ceil(max/ (max>8?4:2))*(max>8?4:2)||2,steps=4;
+  const gap=n>45?2:n>20?4:8;$('chartwrap').style.setProperty('--gap',gap+'px');
+  $('cgrid').innerHTML=Array.from({length:steps+1},(_,i)=>{const v=top*(steps-i)/steps;return `<i style="top:${i*100/steps}%"></i><span style="top:${i*100/steps}%">${+v.toFixed(1)}</span>`}).join('');
+  $('cbars').innerHTML=d.map((x,i)=>`<div class="col" data-i="${i}"><b style="height:${Math.max(0,x.hours/top*100)}%"></b></div>`).join('');
+  const step=n>45?Math.ceil(n/9):n>20?Math.ceil(n/10):n>10?2:1;
+  const lab=x=>n<=10?WD[new Date(x.date+'T12:00:00').getDay()]:x.date.slice(5);
+  $('cx').innerHTML=d.map((x,i)=>`<span>${(n-1-i)%step===0?lab(x):''}</span>`).join('');
+  const sum=d.reduce((a,x)=>a+x.hours,0);$('c_total').textContent=sum.toFixed(1)+' h';
+  const prev=all.slice(-2*range,-range);
+  if(prev.length===range){const ps=prev.reduce((a,x)=>a+x.hours,0);
+    if(ps>0){const pc=(sum-ps)/ps*100;$('c_delta').innerHTML=`<span class="${pc>=0?'up':'down'}">${pc>=0?'+':''}${pc.toFixed(0)}%</span> vs previous ${range} days`}
+    else $('c_delta').textContent='';}else $('c_delta').textContent='';
+  $('ctip').style.display='none';
+}
+(function(){
+  const bars=$('cbars');
+  const hover=e=>{
+    const c=e.target.closest('.col');if(!c||!histData)return;
+    bars.querySelectorAll('.on').forEach(x=>x.classList.remove('on'));c.classList.add('on');
+    const x=histData.daily.slice(-range)[+c.dataset.i],wrap=$('chartwrap'),b=c.querySelector('b').getBoundingClientRect(),w=wrap.getBoundingClientRect();
+    const y=Math.min(b.top-w.top,bars.getBoundingClientRect().height-2);
+    const tip=$('ctip');tip.style.display='block';tip.style.top=y+'px';
+    tip.style.setProperty('--bx',(b.left+b.width/2-w.left)+'px');
+    $('ctipt').textContent=(range<=10?WD[new Date(x.date+'T12:00:00').getDay()]:x.date.slice(5))+' : '+x.hours+' h';
+  };
+  bars.addEventListener('mousemove',hover);bars.addEventListener('click',hover);
+  bars.addEventListener('mouseleave',()=>{bars.querySelectorAll('.on').forEach(x=>x.classList.remove('on'));$('ctip').style.display='none'});
+})();
+document.querySelectorAll('#range button').forEach(b=>b.onclick=()=>{range=+b.dataset.d;document.querySelectorAll('#range button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawChart()});
+const REASON={'stopped by user':['','stop'],'goal reached':['ok','check'],'outside schedule':['','clock'],'session interrupted':['warn','alert'],'configuration error':['err','alert']};
+const row=x=>{const r=REASON[x.reason]||['','info'];return `<tr><td>${fmtDate(x.start)}</td><td>${fmtUp(x.wall)}</td><td>${fmtH(x.counted)}</td><td>${x.peak}</td><td>${esc(x.mode)}</td><td><span class="tag ${r[0]}">${ic(r[1])}${esc(x.reason)}</span></td></tr>`};
+function drawSessions(){
+  const s=histData.sessions;$('sessempty').classList.toggle('hide',s.length>0);$('recentempty').classList.toggle('hide',s.length>0);
+  $('sessrows').innerHTML=s.map(row).join('');$('recentrows').innerHTML=s.slice(0,5).map(row).join('');
+}
+
+/* ---------- logs + updates feed ---------- */
+const RANK={err:3,warn:2};
+function passes(e){const l=$('lvl').value,q=$('q').value.trim().toLowerCase();
+  if(l!=='all'&&(RANK[e.l]||0)<RANK[l])return false;return !q||e.m.toLowerCase().includes(q)}
+function lineHtml(e){const m=esc(e.m).replace(/^(\s*\d\d:\d\d:\d\d)/,'<span class="t">$1</span>');return `<div class="${e.l}">${m}</div>`}
+function renderLogs(){$('logs').innerHTML=logEntries.filter(passes).map(lineHtml).join('');scrollLogs()}
+function scrollLogs(force){const el=$('logs');if(force||$('autoscroll').checked)el.scrollTop=el.scrollHeight}
+const FEEDICO={err:'alert',warn:'alert',ok:'check',live:'eye',sent:'up',info:'info'};
+function drawFeed(){
+  const ev=logEntries.filter(e=>e.l!=='info'||/panel ·/.test(e.m)).slice(-10).reverse();
+  $('evcount').textContent=ev.length?ev.length+' recent':'';
+  $('feed').innerHTML=ev.length?ev.map(e=>{
+    const clean=e.m.replace(/^\s*\d\d:\d\d:\d\d\s+\S\s+/,''),parts=clean.split('·'),head=(parts.length>1?parts[0]:'event').trim(),body=(parts.length>1?parts.slice(1).join('·'):clean).trim();
+    return `<div class="ev ${e.l}"><span class="ico">${ic(FEEDICO[e.l]||'info')}</span><div><div class="t">${esc(body.slice(0,110))}</div><div class="s">${esc(head)} · ${new Date(e.t*1000).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</div></div></div>`}).join(''):'<div class="hint">Nothing to report yet.</div>';
+}
+async function pollLogs(){
+  try{const j=await api('/api/logs?since='+lastSeq);lastSeq=j.seq;if(!j.entries.length){drawFeed();return}
+    logEntries=logEntries.concat(j.entries).slice(-600);
+    const el=$('logs');el.insertAdjacentHTML('beforeend',j.entries.filter(passes).map(lineHtml).join(''));
+    while(el.childElementCount>600)el.firstChild.remove();scrollLogs();drawFeed()}catch(e){}
+}
+$('lvl').onchange=renderLogs;$('q').oninput=renderLogs;
+
+/* ---------- actions ---------- */
+const act=(btn,fn)=>async()=>{btn.disabled=true;try{await fn()}catch(e){if(!(e instanceof AuthErr))toast(e.message,true)}refresh()};
+$('startbtn').onclick=act($('startbtn'),()=>api('/api/start',{}));
+$('stopbtn').onclick=act($('stopbtn'),()=>api('/api/stop',{}));
+$('restartbtn').onclick=act($('restartbtn'),async()=>{await api('/api/restart',{});toast('Restarting…')});
+$('savebtn').onclick=async()=>{
+  try{await api('/api/config',{token:$('f_token').value,alt_token:$('f_alt').value,channel_id:$('f_chan').value,mode:$('f_mode').value,autostart:$('f_auto').checked});
+    $('f_token').value='';$('f_alt').value='';toast('Configuration saved');formFilled=false;refresh()}
+  catch(e){if(!(e instanceof AuthErr))toast(e.message,true)}};
+$('clearalt').onclick=async e=>{e.preventDefault();try{await api('/api/config',{clear_alt:true});toast('Alt account removed');refresh()}catch(x){toast(x.message,true)}};
+$('checkbtn').onclick=async()=>{const b=$('checkbtn'),ul=$('checks');b.disabled=true;ul.innerHTML='<li>Checking…</li>';
+  try{const j=await api('/api/check',{});ul.innerHTML=j.checks.map(c=>`<li><span>${c.ok===true?'✅':c.ok===false?'❌':'⚠️'}</span><b>${esc(c.label)}</b><span class="d">${esc(c.detail)}</span></li>`).join('')}
+  catch(e){ul.innerHTML='';if(!(e instanceof AuthErr))toast(e.message,true)}b.disabled=false};
+$('hookbtn').onclick=async()=>{
+  const notify={};document.querySelectorAll('[data-n]').forEach(i=>notify[i.dataset.n]=i.checked);
+  const body={notify};if($('f_hook').value.trim())body.webhook=$('f_hook').value;
+  try{await api('/api/config',body);$('f_hook').value='';await api('/api/notify/test',{});toast('Saved — test sent');formFilled=false;refresh()}catch(e){if(!(e instanceof AuthErr))toast(e.message,true)}};
+$('clearhook').onclick=async e=>{e.preventDefault();try{await api('/api/config',{webhook:''});toast('Webhook removed');refresh()}catch(x){toast(x.message,true)}};
+['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach((n,i)=>{const l=document.createElement('label'),c=document.createElement('input');c.type='checkbox';c.value=i;c.checked=true;l.append(c,n);$('days').appendChild(l)});
+$('targetchips').onclick=e=>{const b=e.target.closest('button[data-h]');if(b)$('f_target').value=b.dataset.h};
+$('tzbtn').onclick=()=>{try{$('f_tz').value=Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC'}catch(e){}};
+$('schedbtn').onclick=async()=>{
+  const days=[...document.querySelectorAll('#days input')].filter(i=>i.checked).map(i=>+i.value);
+  try{await api('/api/config',{target_hours:parseFloat($('f_target').value||'0'),tz:$('f_tz').value.trim()||'UTC',schedule:{enabled:$('f_sched').checked,start:$('f_from').value,end:$('f_to').value,days}});
+    toast('Goal and schedule saved');formFilled=false;refresh()}catch(e){if(!(e instanceof AuthErr))toast(e.message,true)}};
+$('importbtn').onclick=()=>$('importfile').click();
+$('importfile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  if(!confirm('Replace the current statistics with the contents of “'+f.name+'”?'))return;
+  try{if(f.size>500000)throw new Error('File too large');const data=JSON.parse(await f.text());
+    await api('/api/stats/import',{data});toast('Statistics imported');formFilled=false;refresh();loadHistory()}
+  catch(x){if(!(x instanceof AuthErr))toast(x instanceof SyntaxError?'Invalid JSON file':x.message,true)}};
+$('pwbtn').onclick=async()=>{try{await api('/api/password',{old:$('pw_old').value,new:$('pw_new').value});$('pw_old').value=$('pw_new').value='';toast('Password changed (other devices signed out)')}catch(e){toast(e.message,true)}};
+$('logoutall').onclick=async()=>{try{await api('/api/logout_all',{});toast('Other devices signed out')}catch(e){toast(e.message,true)}};
+$('basebtn').onclick=async()=>{try{await api('/api/stats/baseline',{hours:parseFloat($('f_base').value||'0')});toast('Value applied');refresh()}catch(e){toast(e.message,true)}};
+$('resetbtn').onclick=async()=>{if(!confirm('Erase all history and totals of the panel?'))return;try{await api('/api/stats/reset',{confirm:true});toast('Statistics reset');formFilled=false;refresh();loadHistory()}catch(e){toast(e.message,true)}};
+$('profbtn').onclick=async()=>{const el=$('prof');el.textContent='Loading…';
+  try{const p=await api('/api/profile');el.textContent='';const t=document.createElement('div');t.textContent=`${p.display} (@${p.username}) · ID ${p.id}`;el.appendChild(t);
+    const u=document.createElement('div');u.textContent=p.badges.length?'Badges: '+p.badges.map(b=>b.description||b.id).join(' · '):'No public badge shown.';el.appendChild(u)}
+  catch(e){el.textContent='⛔ '+e.message}};
+init();
+</script>
+</body>
+</html>

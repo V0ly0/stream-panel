@@ -1,0 +1,24 @@
+services:
+  stream-panel:
+    build: .
+    restart: unless-stopped
+    # Published on localhost only: reach it through an SSH tunnel, Cloudflare Tunnel, Tailscale or an HTTPS reverse proxy.
+    ports:
+      - "127.0.0.1:7860:7860"
+    environment:
+      PANEL_PASSWORD: ${PANEL_PASSWORD:-}
+      NOTIFY_WEBHOOK: ${NOTIFY_WEBHOOK:-}
+      TRUST_PROXY: ${TRUST_PROXY:-}
+      KEEPALIVE_URL: ${KEEPALIVE_URL:-}
+    volumes:
+      - panel-data:/data
+    stop_grace_period: 30s        # leaves time to close the stream cleanly
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options: {max-size: "5m", max-file: "3"}
+volumes:
+  panel-data:

@@ -1,0 +1,14 @@
+# Render deployment (free plan). See README → "Hosting".
+# The disk is temporary: export your statistics (Settings → Statistics) before a redeploy.
+services:
+  - type: web
+    name: stream-panel
+    runtime: docker
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: PANEL_PASSWORD
+        generateValue: true        # read it under Environment, in the Render dashboard
+      - key: TRUST_PROXY
+        value: "1"                 # Render terminates HTTPS: Secure cookie + real client IP
+      # Keep-alive configures itself via RENDER_EXTERNAL_URL; set KEEPALIVE=0 to disable it.
